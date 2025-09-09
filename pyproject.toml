@@ -1,0 +1,11 @@
+[project]
+name = "mangify"
+version = "0.1.0"
+description = "Descubra, leia e viva histórias incríveis em um só app"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi[standard]>=0.116.1",
+    "pydantic-settings>=2.10.1",
+    "pymongo>=4.14.1",
+]
