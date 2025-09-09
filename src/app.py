@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 
+from src.routers import users
+from src.schemas.base import MessageResponse
+
 app = FastAPI(
     title="Mangify",
     description="Descubra, leia e viva histórias incríveis em um só app",
@@ -7,6 +10,9 @@ app = FastAPI(
 )
 
 
-@app.get("/")
+@app.get("/", response_model=MessageResponse)
 async def root():
-    return {"message": "Bem vindo ao Mangify!"}
+    return dict(message="Bem vindo ao Mangify!")
+
+
+app.include_router(users.router)
