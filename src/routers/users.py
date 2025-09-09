@@ -15,6 +15,7 @@ from src.schemas.users import (
     UserType,
     UserUpdateInput,
 )
+from src.security import get_password_hash, verify_password
 
 
 async def get_collection(db: Database):
@@ -56,7 +57,7 @@ async def create_user(user_data: UserCreateInput, collection: Collection):
             {
                 "_id": ulid(),
                 "username": user_data.username,
-                "password": user_data.password,
+                "password": get_password_hash(user_data.password),
                 "created_at": datetime.now(timezone.utc).isoformat(),
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             }
@@ -78,6 +79,14 @@ async def create_user(user_data: UserCreateInput, collection: Collection):
 @router.put("/{user_id}", response_model=MessageResponse)
 async def update_user(user_id: str, user_data: UserUpdateInput, collection: Collection):
     user = await collection.find_one({"_id": user_id})
+    if user_data.password is not None and verify_password(
+        user_data.password, user["password"]
+    ):
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="A nova senha não pode ser igual a senha atual!",
+        )
+
     updated_data = user_data.model_dump(exclude_none=True, exclude_unset=True).copy()
 
     if user is None:
@@ -92,6 +101,9 @@ async def update_user(user_id: str, user_data: UserUpdateInput, collection: Coll
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST, detail="Nada a ser atualizado!"
         )
+
+    if "password" in updated_data:
+        updated_data["password"] = get_password_hash(updated_data["password"])
 
     try:
         result = await collection.update_one(
