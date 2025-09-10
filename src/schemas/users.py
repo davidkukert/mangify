@@ -1,7 +1,9 @@
-from typing import TypedDict
-from pydantic import Field
-from src.schemas.base import BaseSchema
 from datetime import datetime
+from typing import TypedDict
+
+from pydantic import Field
+
+from src.schemas.base import BaseSchema
 
 
 class UserCreateInput(BaseSchema):
@@ -15,7 +17,7 @@ class UserUpdateInput(BaseSchema):
 
 
 class UserSchema(BaseSchema):
-    id: str = Field(validation_alias="_id")
+    id: str = Field(validation_alias='_id')
     username: str
     created_at: datetime
     updated_at: datetime

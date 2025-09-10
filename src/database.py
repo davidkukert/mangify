@@ -1,4 +1,5 @@
 from typing import Annotated
+
 from fastapi import Depends
 from pymongo import AsyncMongoClient
 from pymongo.asynchronous.database import AsyncDatabase
