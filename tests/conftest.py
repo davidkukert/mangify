@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from http import HTTPStatus
 
 import pytest
 import pytest_asyncio
@@ -45,6 +46,17 @@ async def user(db_client) -> UserType:
     if user is None:
         pytest.fail('Failed to create test user')
     return user
+
+
+@pytest.fixture
+def token(client, user):
+    response = client.post(
+        '/auth/token',
+        data={'username': user['username'], 'password': 'testpassword'},
+    )
+    if response.status_code != HTTPStatus.OK:
+        pytest.fail('Failed to obtain access token')
+    return response.json()['accessToken']
 
 
 @pytest_asyncio.fixture(autouse=True)
