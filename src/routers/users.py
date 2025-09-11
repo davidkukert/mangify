@@ -1,13 +1,11 @@
 from datetime import datetime, timezone
 from http import HTTPStatus
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
-from pymongo.asynchronous.collection import AsyncCollection
+from fastapi import APIRouter, HTTPException
 from pymongo.errors import DuplicateKeyError
 from ulid import ulid
 
-from src.database import Database
+from src.database import UserCollection
 from src.schemas.base import MessageResponse
 from src.schemas.users import (
     UserCreateInput,
@@ -18,31 +16,17 @@ from src.schemas.users import (
 )
 from src.security import get_password_hash, verify_password
 
-
-async def get_collection(db: Database):
-    collection: AsyncCollection[UserType] = db.get_collection('users')
-    if 'idx_username' not in await collection.index_information():
-        await collection.create_index(
-            'username', name='idx_username', unique=True
-        )
-
-    return collection
-
-
-Collection = Annotated[AsyncCollection[UserType], Depends(get_collection)]
-
-
 router = APIRouter(prefix='/users', tags=['Users'])
 
 
 @router.get('/', response_model=UserList)
-async def index_users(collection: Collection):
+async def index_users(collection: UserCollection):
     list_users = await collection.find().to_list()
     return dict(data=list_users)
 
 
 @router.get('/{user_id}', response_model=UserResponse)
-async def show_user(user_id: str, collection: Collection):
+async def show_user(user_id: str, collection: UserCollection):
     user = await collection.find_one({'_id': user_id})
     if user is None:
         raise HTTPException(
@@ -54,7 +38,7 @@ async def show_user(user_id: str, collection: Collection):
 
 
 @router.post('/', response_model=MessageResponse)
-async def create_user(user_data: UserCreateInput, collection: Collection):
+async def create_user(user_data: UserCreateInput, collection: UserCollection):
     try:
         await collection.insert_one(
             UserType(
@@ -76,7 +60,7 @@ async def create_user(user_data: UserCreateInput, collection: Collection):
 
 @router.put('/{user_id}', response_model=MessageResponse)
 async def update_user(
-    user_id: str, user_data: UserUpdateInput, collection: Collection
+    user_id: str, user_data: UserUpdateInput, collection: UserCollection
 ):
     user = await collection.find_one({'_id': user_id})
 
@@ -126,7 +110,7 @@ async def update_user(
 
 
 @router.delete('/{user_id}', response_model=MessageResponse)
-async def delete(user_id: str, collection: Collection):
+async def delete(user_id: str, collection: UserCollection):
     result = await collection.delete_one({'_id': user_id})
 
     if result.deleted_count == 0:

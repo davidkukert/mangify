@@ -6,8 +6,7 @@ from fastapi.testclient import TestClient
 from ulid import ulid
 
 from src.app import app
-from src.database import DBClient, get_db, get_db_client
-from src.routers.users import get_collection
+from src.database import DBClient, get_db, get_db_client, get_user_collection
 from src.schemas.users import UserType
 from src.security import get_password_hash
 
@@ -32,7 +31,7 @@ def client():
 
 @pytest_asyncio.fixture
 async def user(db_client) -> UserType:
-    collection = await get_collection(db_client)
+    collection = await get_user_collection(db_client)
     result = await collection.insert_one(
         UserType(
             _id=ulid(),

@@ -12,3 +12,8 @@ class BaseSchema(BaseModel):
 
 class MessageResponse(BaseSchema):
     message: str
+
+
+class TokenSchema(BaseSchema):
+    access_token: str
+    token_type: str

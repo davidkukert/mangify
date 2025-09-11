@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from src.routers import users
+from src.routers import auth, users
 from src.schemas.base import MessageResponse
 
 app = FastAPI(
@@ -16,3 +16,4 @@ async def root():
 
 
 app.include_router(users.router)
+app.include_router(auth.router)
