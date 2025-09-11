@@ -56,7 +56,7 @@ async def show_user(user_id: str, collection: Collection):
 @router.post('/', response_model=MessageResponse)
 async def create_user(user_data: UserCreateInput, collection: Collection):
     try:
-        result = await collection.insert_one(
+        await collection.insert_one(
             UserType(
                 _id=ulid(),
                 username=user_data.username,
@@ -69,12 +69,6 @@ async def create_user(user_data: UserCreateInput, collection: Collection):
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail='Username não esta disponível!',
-        )
-
-    if not result.acknowledged:
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
-            detail='Erro na criação de usuário, tente novamente mais tarde',
         )
 
     return dict(message='Usuário criado!')
@@ -111,11 +105,14 @@ async def update_user(
             status_code=HTTPStatus.BAD_REQUEST, detail='Nada a ser atualizado!'
         )
 
-    if 'password' in updated_data:
-        updated_data['password'] = get_password_hash(updated_data['password'])
+    updated_data['password'] = (
+        get_password_hash(updated_data['password'])
+        if 'password' in updated_data
+        else user['password']
+    )
 
     try:
-        result = await collection.update_one(
+        await collection.update_one(
             {'_id': user_id},
             {'$set': updated_data},
         )
@@ -123,15 +120,6 @@ async def update_user(
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail='Username não esta disponível!',
-        )
-
-    if result.modified_count == 0:
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
-            detail=(
-                'Erro ao atualizar tentar atualizar o usuário, '
-                'tente novamente mais tarde!'
-            ),
         )
 
     return dict(message='Usuário atualizado!')
