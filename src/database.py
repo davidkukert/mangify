@@ -4,6 +4,7 @@ from fastapi import Depends
 from pymongo import AsyncMongoClient
 from pymongo.asynchronous.database import AsyncCollection, AsyncDatabase
 
+from src.schemas.mangas import MangaType
 from src.schemas.users import UserType
 from src.settings import settings
 
@@ -34,4 +35,17 @@ async def get_user_collection(db: Database):
 
 UserCollection = Annotated[
     AsyncCollection[UserType], Depends(get_user_collection)
+]
+
+
+async def get_manga_collection(db: Database):
+    collection: AsyncCollection[UserType] = db.get_collection('mangas')
+    if 'idx_title' not in await collection.index_information():
+        await collection.create_index('title', name='idx_title', unique=True)
+
+    return collection
+
+
+MangaCollection = Annotated[
+    AsyncCollection[MangaType], Depends(get_manga_collection)
 ]

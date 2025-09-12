@@ -37,7 +37,9 @@ async def show_user(user_id: str, collection: UserCollection):
     return dict(data=user)
 
 
-@router.post('/', response_model=MessageResponse)
+@router.post(
+    '/', status_code=HTTPStatus.CREATED, response_model=MessageResponse
+)
 async def create_user(user_data: UserCreateInput, collection: UserCollection):
     try:
         await collection.insert_one(

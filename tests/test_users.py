@@ -19,7 +19,7 @@ def test_index_users(client):
 
 def test_create_user(client, user_data):
     response = client.post('/users/', json=user_data.model_dump())
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
     assert response.json() == {'message': 'Usuário criado!'}
 
 
@@ -82,7 +82,7 @@ def test_update_user_to_existing_username(client, user: UserType):
         '/users/',
         json=dict(username='anotheruser', password='password'),
     )
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED
 
     # Attempt to update the first user to the second user's username
     response = client.put(
