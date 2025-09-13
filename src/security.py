@@ -8,7 +8,7 @@ from jwt import DecodeError, ExpiredSignatureError, decode, encode
 from pwdlib import PasswordHash
 
 from src.database import UserCollection
-from src.schemas.users import UserType
+from src.schemas.users import UserDB, UserType
 from src.settings import settings
 
 pwd_context = PasswordHash.recommended()
@@ -67,7 +67,7 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
 
-    return user
+    return UserDB.model_validate(user)
 
 
 CurrentUser = Annotated[UserType, Depends(get_current_user)]

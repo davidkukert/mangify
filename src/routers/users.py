@@ -5,16 +5,19 @@ from fastapi import APIRouter, HTTPException
 from pymongo.errors import DuplicateKeyError
 from ulid import ulid
 
+from src.auth.authorization import get_authorization
 from src.database import UserCollection
 from src.schemas.base import MessageResponse
 from src.schemas.users import (
+    RoleEnum,
     UserCreateInput,
+    UserDB,
     UserList,
     UserResponse,
     UserType,
     UserUpdateInput,
 )
-from src.security import get_password_hash, verify_password
+from src.security import CurrentUser, get_password_hash, verify_password
 
 router = APIRouter(prefix='/users', tags=['Users'])
 
@@ -47,6 +50,7 @@ async def create_user(user_data: UserCreateInput, collection: UserCollection):
                 _id=ulid(),
                 username=user_data.username,
                 password=get_password_hash(user_data.password),
+                role=RoleEnum.READER,
                 created_at=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc),
             )
@@ -62,7 +66,10 @@ async def create_user(user_data: UserCreateInput, collection: UserCollection):
 
 @router.put('/{user_id}', response_model=MessageResponse)
 async def update_user(
-    user_id: str, user_data: UserUpdateInput, collection: UserCollection
+    user_id: str,
+    user_data: UserUpdateInput,
+    collection: UserCollection,
+    current_user: CurrentUser,
 ):
     user = await collection.find_one({'_id': user_id})
 
@@ -70,6 +77,10 @@ async def update_user(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='Usuário não encontrado!'
         )
+
+    await get_authorization(
+        current_user, UserDB.model_validate(user), 'update', 'user'
+    )
 
     if user_data.password is not None and verify_password(
         user_data.password, user['password']
@@ -112,13 +123,20 @@ async def update_user(
 
 
 @router.delete('/{user_id}', response_model=MessageResponse)
-async def delete(user_id: str, collection: UserCollection):
-    result = await collection.delete_one({'_id': user_id})
-
-    if result.deleted_count == 0:
+async def delete(
+    user_id: str, collection: UserCollection, current_user: CurrentUser
+):
+    user = await collection.find_one({'_id': user_id})
+    if user is None:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail='Usuário não encontrado!',
         )
+
+    await get_authorization(
+        current_user, UserDB.model_validate(user), 'delete', 'user'
+    )
+
+    await collection.delete_one({'_id': user_id})
 
     return dict(message='Usuário deletado!')
