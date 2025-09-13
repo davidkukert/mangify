@@ -2,7 +2,8 @@ from typing import Annotated
 
 from fastapi import Depends
 from pymongo import AsyncMongoClient
-from pymongo.asynchronous.database import AsyncCollection, AsyncDatabase
+from pymongo.asynchronous.collection import AsyncCollection
+from pymongo.asynchronous.database import AsyncDatabase
 
 from src.schemas.mangas import MangaType
 from src.schemas.users import UserType
@@ -39,7 +40,7 @@ UserCollection = Annotated[
 
 
 async def get_manga_collection(db: Database):
-    collection: AsyncCollection[UserType] = db.get_collection('mangas')
+    collection: AsyncCollection[MangaType] = db.get_collection('mangas')
     if 'idx_title' not in await collection.index_information():
         await collection.create_index('title', name='idx_title', unique=True)
 
